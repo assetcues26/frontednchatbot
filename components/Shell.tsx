@@ -1,0 +1,155 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
+import { api, ApiError, type Me } from "@/lib/api";
+import { getSupabase } from "@/lib/supabase";
+import { RoleBadges } from "./Badges";
+
+/**
+ * Authenticated shell.
+ *
+ * It renders admin navigation based on `me.is_admin`, which comes from the
+ * server. That is a convenience, not a control: hiding a link protects
+ * nothing, and every admin route re-checks the role server-side. If this
+ * component were compromised, the API would still refuse.
+ */
+export function Shell({
+  children,
+  requireAdmin = false,
+}: {
+  children: (me: Me) => React.ReactNode;
+  requireAdmin?: boolean;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [me, setMe] = useState<Me | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .me()
+      .then((value) => !cancelled && setMe(value))
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        if (err instanceof ApiError && err.status === 401) {
+          router.replace("/login");
+          return;
+        }
+        setError(
+          err instanceof Error ? err.message : "Could not load your account",
+        );
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+
+  if (error) {
+    return (
+      <Centered>
+        <div className="card max-w-md p-6">
+          <h1 className="text-lg font-semibold">Something went wrong</h1>
+          <p className="mt-2 text-sm text-ink-600">{error}</p>
+          <p className="mt-4 text-xs text-ink-500">
+            If this persists, check that the API is running and that
+            NEXT_PUBLIC_API_BASE_URL points at it.
+          </p>
+        </div>
+      </Centered>
+    );
+  }
+
+  if (!me) {
+    return (
+      <Centered>
+        <p className="text-sm text-ink-500">Loading…</p>
+      </Centered>
+    );
+  }
+
+  if (requireAdmin && !me.is_admin) {
+    return (
+      <Centered>
+        <div className="card max-w-md p-6">
+          <h1 className="text-lg font-semibold">Administrators only</h1>
+          <p className="mt-2 text-sm text-ink-600">
+            Your roles: <RoleBadges roles={me.roles} />
+          </p>
+          <Link href="/chat" className="btn-primary mt-4">
+            Back to chat
+          </Link>
+        </div>
+      </Centered>
+    );
+  }
+
+  const nav = [
+    { href: "/chat", label: "Chat", admin: false },
+    { href: "/admin/documents", label: "Documents", admin: true },
+    { href: "/admin/users", label: "Users", admin: true },
+    { href: "/admin/compare", label: "Compare roles", admin: true },
+    { href: "/admin/audit", label: "Audit", admin: true },
+  ].filter((item) => !item.admin || me.is_admin);
+
+  async function signOut() {
+    await getSupabase().auth.signOut();
+    router.replace("/login");
+  }
+
+  return (
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-20 border-b border-ink-200 bg-white/90 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center gap-6 px-4 py-3">
+          <Link href="/chat" className="flex items-center gap-2">
+            <span className="grid size-7 place-items-center rounded-md bg-brand-600 text-xs font-bold text-white">
+              AC
+            </span>
+            <span className="text-sm font-semibold">AssetCues Assistant</span>
+          </Link>
+
+          <nav className="flex items-center gap-1">
+            {nav.map((item) => {
+              const active = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`rounded-lg px-3 py-1.5 text-sm transition ${
+                    active
+                      ? "bg-ink-100 font-medium text-ink-900"
+                      : "text-ink-600 hover:bg-ink-50"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="ml-auto flex items-center gap-3">
+            <div className="hidden text-right sm:block">
+              <div className="text-xs font-medium">{me.email}</div>
+              <div className="text-[11px] text-ink-500">{me.tenant_name}</div>
+            </div>
+            <RoleBadges roles={me.roles} />
+            <button onClick={signOut} className="btn-ghost text-xs">
+              Sign out
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-7xl px-4 py-6">{children(me)}</main>
+    </div>
+  );
+}
+
+function Centered({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="grid min-h-screen place-items-center px-4">{children}</div>
+  );
+}
