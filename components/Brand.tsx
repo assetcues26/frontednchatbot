@@ -54,21 +54,22 @@ export function Mark({ className = "" }: { className?: string }) {
  */
 export function LogoAnimation({
   className = "",
-  round = false,
   surface = "#ffffff",
 }: {
   className?: string;
-  round?: boolean;
   surface?: string;
 }) {
   return (
     <span
       aria-hidden
       style={{ background: surface }}
-      className={`pointer-events-none block overflow-hidden ${
-        round ? "size-full rounded-full" : "size-full"
-      }`}
+      className="pointer-events-none block size-full overflow-hidden"
     >
+      {/* Always `object-contain`, never `object-cover`. The artwork is
+          landscape; covering a square or a circle with it crops the mark's
+          outer dots off, which is the one thing a logo may not do. Contain
+          letterboxes instead, and the letterboxing is the same white as the
+          surface, so it is invisible. */}
       <video
         autoPlay
         loop
@@ -76,9 +77,7 @@ export function LogoAnimation({
         playsInline
         preload="auto"
         poster="/brand/logo-anim-poster.jpg"
-        className={`blend-logo size-full select-none ${
-          round ? "object-cover" : "object-contain"
-        } ${className}`}
+        className={`blend-logo size-full select-none object-contain ${className}`}
       >
         <source src="/brand/logo-anim.webm" type="video/webm" />
         <source src="/brand/logo-anim.mp4" type="video/mp4" />
@@ -88,17 +87,14 @@ export function LogoAnimation({
 }
 
 /**
- * The assistant's "thinking" state: the mark animating inside a soft halo.
- * Used while an answer streams, so the brand is doing the waiting.
+ * The assistant's "thinking" state: the mark animating beside a label.
+ * Used while work is in flight, so the brand is doing the waiting.
  */
 export function ThinkingMark({ label = "Thinking" }: { label?: string }) {
   return (
     <span className="inline-flex items-center gap-2.5" aria-label={label}>
-      <span className="relative grid size-9 place-items-center">
-        <span className="animate-halo absolute inset-0 rounded-full bg-gradient-to-tr from-flare-500/25 via-orchid-500/20 to-aqua-500/25 blur-[6px]" />
-        <span className="relative size-9 overflow-hidden rounded-full bg-white ring-1 ring-ink-200">
-          <LogoAnimation round />
-        </span>
+      <span className="block aspect-[733/480] w-12 shrink-0">
+        <LogoAnimation surface="#ffffff" />
       </span>
       <span className="text-xs text-ink-500">{label}</span>
     </span>

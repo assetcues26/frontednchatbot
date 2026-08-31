@@ -80,17 +80,14 @@ export function Shell({
 
   if (!me) {
     return (
-      <Centered>
-        <div className="flex flex-col items-center gap-4">
-          <span className="relative size-16">
-            <span className="animate-halo absolute inset-0 rounded-full bg-gradient-to-tr from-flare-500/25 via-orchid-500/20 to-aqua-500/25 blur-md" />
-            <span className="relative size-16 overflow-hidden rounded-full bg-white ring-1 ring-ink-200">
-              <LogoAnimation round />
-            </span>
-          </span>
-          <p className="text-sm text-ink-500">Signing you in…</p>
+      <div className="grid min-h-screen place-items-center bg-white px-4">
+        <div className="flex flex-col items-center">
+          <div className="aspect-[733/480] w-64">
+            <LogoAnimation surface="#ffffff" />
+          </div>
+          <p className="-mt-2 text-sm text-ink-500">Signing you in…</p>
         </div>
-      </Centered>
+      </div>
     );
   }
 
@@ -133,10 +130,10 @@ export function Shell({
             aria-label="AssetCues Assistant"
           >
             {/* The mark animates on hover: alive without being restless. */}
-            <span className="relative size-8 overflow-hidden rounded-lg bg-white ring-1 ring-ink-200/70 transition group-hover:ring-brand-300">
-              <Mark className="size-full object-contain p-0.5 transition duration-300 group-hover:opacity-0" />
+            <span className="relative size-9 overflow-hidden rounded-lg bg-white ring-1 ring-ink-200/70 transition group-hover:ring-brand-300">
+              <Mark className="size-full object-contain p-1 transition duration-300 group-hover:opacity-0" />
               <span className="absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100">
-                <LogoAnimation round />
+                <LogoAnimation surface="#ffffff" />
               </span>
             </span>
             <span className="hidden text-sm font-semibold tracking-tight sm:block">

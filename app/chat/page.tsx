@@ -212,11 +212,8 @@ function Chat({ me }: { me: Me }) {
       {turns.length === 0 && (
         <div className="card animate-pop mb-6 overflow-hidden p-6">
           <div className="mb-4 flex items-center gap-3">
-            <span className="relative size-12 shrink-0">
-              <span className="animate-halo absolute inset-0 rounded-full bg-gradient-to-tr from-flare-500/25 via-orchid-500/20 to-aqua-500/25 blur-md" />
-              <span className="relative block size-12 overflow-hidden rounded-full bg-white ring-1 ring-ink-200">
-                <LogoAnimation round />
-              </span>
+            <span className="block aspect-[733/480] w-24 shrink-0">
+              <LogoAnimation surface="#ffffff" />
             </span>
             <h1 className="text-lg font-semibold">
               Ask about the AssetCues product
@@ -326,11 +323,11 @@ function TurnView({
       )}
 
       <div className="card flex gap-3 p-4">
-        <span className="mt-0.5 hidden size-7 shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-ink-200 sm:block">
+        <span className="mt-0.5 hidden size-8 shrink-0 overflow-hidden rounded-lg bg-white ring-1 ring-ink-200 sm:block">
           {turn.streaming ? (
-            <LogoAnimation round />
+            <LogoAnimation surface="#ffffff" />
           ) : (
-            <Mark className="size-full object-contain p-0.5" />
+            <Mark className="size-full object-contain p-1" />
           )}
         </span>
 

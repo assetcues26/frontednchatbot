@@ -53,131 +53,104 @@ export default function LoginPage() {
     router.replace("/chat");
   }
 
+  // The whole page is the animation's own white. Its artwork has no alpha
+  // channel, so the field around it only disappears when what sits behind is
+  // the same white -- no split, no wash, no tint anywhere on this screen.
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
-      {/* Left: the brand.
-
-          This half is pure white deliberately. The animation has no alpha
-          channel -- its artwork sits on a white field -- so the only way that
-          field disappears entirely is for what sits behind it to be the same
-          white. Any tint, gradient or wash here and the video's own rectangle
-          shows up as a visible box. */}
-      <section className="relative flex flex-col items-center justify-center bg-white px-8 py-14">
-        <div className="w-full max-w-md">
-          <div className="animate-pop relative mx-auto aspect-[733/480] w-full max-w-sm">
-            <LogoAnimation surface="#ffffff" />
-          </div>
-
-          <div className="mt-4 flex flex-col items-center text-center">
-            <Wordmark className="animate-rise h-8 w-auto" />
-            <p
-              className="animate-rise mt-6 max-w-sm text-sm leading-relaxed text-ink-500"
-              style={{ animationDelay: "120ms" }}
-            >
-              Every answer is drawn only from the documentation your role is
-              cleared to read, and every claim is cited back to its source.
-            </p>
-          </div>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-white px-6 py-12">
+      <div className="w-full max-w-md">
+        <div className="animate-pop mx-auto aspect-[733/480] w-full max-w-md">
+          <LogoAnimation surface="#ffffff" />
         </div>
 
-        {/* A hairline rather than a hard seam between the halves. */}
-        <div
-          aria-hidden
-          className="absolute inset-y-0 right-0 hidden w-px bg-gradient-to-b from-transparent via-ink-200 to-transparent lg:block"
-        />
-      </section>
-
-      {/* Right: the form, on the app's own surface colour. */}
-      <section className="relative flex items-center justify-center overflow-hidden bg-ink-50 px-6 py-14">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-60"
-          style={{
-            background:
-              "radial-gradient(40rem 24rem at 80% 0%, var(--color-aqua-100), transparent 65%)," +
-              "radial-gradient(36rem 22rem at 10% 100%, var(--color-flare-100), transparent 65%)",
-          }}
-        />
-
-        <div className="relative w-full max-w-sm">
-          <h1 className="text-xl font-semibold tracking-tight">
+        <div className="-mt-2 flex flex-col items-center text-center">
+          <Wordmark className="animate-rise h-8 w-auto" />
+          <h1
+            className="animate-rise mt-6 text-xl font-semibold tracking-tight"
+            style={{ animationDelay: "100ms" }}
+          >
             Documentation Assistant
           </h1>
-          <p className="mt-1 text-sm text-ink-500">Sign in to continue.</p>
-
-          <div className="card animate-pop mt-6 p-6">
-            <button
-              onClick={signInWithGoogle}
-              disabled={busy}
-              className="btn w-full border border-ink-200 bg-white hover:bg-ink-50"
-            >
-              <GoogleMark />
-              Sign in with Google
-            </button>
-            <p className="mt-2 text-center text-xs text-ink-500">
-              For AssetCues staff
-            </p>
-
-            <div className="my-5 flex items-center gap-3">
-              <div className="h-px flex-1 bg-ink-200" />
-              <span className="text-xs text-ink-400">or</span>
-              <div className="h-px flex-1 bg-ink-200" />
-            </div>
-
-            <form onSubmit={signInWithPassword} className="space-y-3">
-              <div>
-                <label htmlFor="email" className="mb-1 block text-xs font-medium">
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  className="input"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@company.com"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="password"
-                  className="mb-1 block text-xs font-medium"
-                >
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  required
-                  autoComplete="current-password"
-                  className="input"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={busy}
-                className="btn-primary w-full"
-              >
-                {busy ? "Signing in…" : "Sign in"}
-              </button>
-            </form>
-
-            <p className="mt-3 text-center text-xs text-ink-500">
-              Customer accounts are created by an administrator.
-            </p>
-
-            {error && (
-              <p className="animate-rise mt-4 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-800">
-                {error}
-              </p>
-            )}
-          </div>
+          <p
+            className="animate-rise mt-1.5 max-w-sm text-sm leading-relaxed text-ink-500"
+            style={{ animationDelay: "150ms" }}
+          >
+            Every answer is drawn only from the documentation your role is
+            cleared to read, and every claim is cited back to its source.
+          </p>
         </div>
-      </section>
+
+        <div
+          className="animate-pop mt-8 rounded-xl border border-ink-200 bg-white p-6 shadow-sm"
+          style={{ animationDelay: "200ms" }}
+        >
+          <button
+            onClick={signInWithGoogle}
+            disabled={busy}
+            className="btn w-full border border-ink-200 bg-white hover:bg-ink-50"
+          >
+            <GoogleMark />
+            Sign in with Google
+          </button>
+          <p className="mt-2 text-center text-xs text-ink-500">
+            For AssetCues staff
+          </p>
+
+          <div className="my-5 flex items-center gap-3">
+            <div className="h-px flex-1 bg-ink-200" />
+            <span className="text-xs text-ink-400">or</span>
+            <div className="h-px flex-1 bg-ink-200" />
+          </div>
+
+          <form onSubmit={signInWithPassword} className="space-y-3">
+            <div>
+              <label htmlFor="email" className="mb-1 block text-xs font-medium">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                required
+                autoComplete="email"
+                className="input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="password"
+                className="mb-1 block text-xs font-medium"
+              >
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                required
+                autoComplete="current-password"
+                className="input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <button type="submit" disabled={busy} className="btn-primary w-full">
+              {busy ? "Signing in…" : "Sign in"}
+            </button>
+          </form>
+
+          <p className="mt-3 text-center text-xs text-ink-500">
+            Customer accounts are created by an administrator.
+          </p>
+
+          {error && (
+            <p className="animate-rise mt-4 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-800">
+              {error}
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
