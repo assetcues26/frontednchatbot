@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { RoleBadges } from "@/components/Badges";
-import { LogoAnimation, Mark, ThinkingMark } from "@/components/Brand";
+import { AnswerBody } from "@/components/AnswerBody";
+import { LogoAnimation, Mark } from "@/components/Brand";
+import { Composer } from "@/components/Composer";
 import { Shell } from "@/components/Shell";
 import { api, askStream, type Citation, type Me } from "@/lib/api";
 import {
@@ -16,6 +18,19 @@ import {
 } from "@/lib/history";
 
 const REFUSAL_PREFIX = "I don't have information on that";
+
+// On the composer having a microphone but no attach or camera button.
+//
+// Dictation is real: the browser's SpeechRecognition API does it locally.
+//
+// Attaching a file or a photo to a question is not a missing button, it is a
+// missing pipeline. Every document here reaches an answer by one route --
+// ingest, classify, and an administrator grants roles before it becomes
+// retrievable. That quarantine is guardrail G1 and it is the product's whole
+// claim. A file attached to a chat message would reach the model without any
+// of it, which is precisely the hole the system exists to close. Doing it
+// properly means routing the upload through the same review queue, which is a
+// scoped feature rather than an icon.
 
 interface Turn {
   id: string;
@@ -256,23 +271,12 @@ function Chat({ me }: { me: Me }) {
             </button>
           </div>
         )}
-        <div className="flex gap-2">
-          <input
-            className="input"
-            placeholder="Ask a question about the product…"
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            disabled={busy}
-            aria-label="Your question"
-          />
-          <button
-            type="submit"
-            className="btn-primary"
-            disabled={busy || !question.trim()}
-          >
-            {busy ? "Thinking…" : "Ask"}
-          </button>
-        </div>
+        <Composer
+          value={question}
+          onChange={setQuestion}
+          onSubmit={() => ask(question)}
+          busy={busy}
+        />
       </form>
     </div>
   );
@@ -330,7 +334,7 @@ function TurnView({
             <RefusalCard question={turn.question} answer={turn.answer} />
           ) : (
             <>
-              <AnswerText text={turn.answer} citations={turn.citations} />
+              <AnswerBody text={turn.answer} citations={turn.citations} />
               {turn.streaming && <TypingDots />}
               {!turn.streaming && turn.citations.length > 0 && (
                 <CitationList citations={turn.citations} />
@@ -350,8 +354,20 @@ function TurnView({
             </>
           )
         ) : (
-          // Before the first token arrives, the brand animation is the wait.
-          <ThinkingMark label="Searching the documents you can read" />
+          // The avatar beside this is already the animated mark; a second one
+          // here was two logos saying the same thing.
+          <p className="flex items-center gap-2 py-1 text-sm text-ink-500">
+            Searching the documents you can read
+            <span className="inline-flex gap-1">
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  className="typing-dot size-1.5 rounded-full bg-brand-400"
+                  style={{ animationDelay: `${i * 0.15}s` }}
+                />
+              ))}
+            </span>
+          </p>
         )}
         </div>
       </div>
@@ -392,37 +408,6 @@ function FollowUps({
           </button>
         ))}
       </div>
-    </div>
-  );
-}
-
-function AnswerText({
-  text,
-  citations,
-}: {
-  text: string;
-  citations: Citation[];
-}) {
-  const known = new Set(citations.map((c) => c.key.toLowerCase()));
-  const numbers = new Map(citations.map((c, i) => [c.key.toLowerCase(), i + 1]));
-
-  // Turn [3fa85f64#7] into a small superscript marker.
-  const parts = text.split(/(\[[0-9a-fA-F]{8}#\d+(?:\s*,\s*[0-9a-fA-F]{8}#\d+)*\])/g);
-
-  return (
-    <div className="whitespace-pre-wrap text-sm leading-relaxed text-ink-800">
-      {parts.map((part, index) => {
-        const match = /^\[(.+)\]$/.exec(part);
-        if (!match?.[1]) return <span key={index}>{part}</span>;
-        const keys = match[1].split(",").map((k) => k.trim().toLowerCase());
-        return (
-          <sup key={index} className="mx-0.5 font-medium text-brand-600">
-            {keys
-              .map((k) => (known.has(k) ? (numbers.get(k) ?? "?") : "?"))
-              .join(",")}
-          </sup>
-        );
-      })}
     </div>
   );
 }
