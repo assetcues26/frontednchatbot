@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "AssetCues Assistant",
   description:
     "Role-aware question answering over AssetCues product documentation.",
+  icons: { icon: "/brand/assetcues-mark.png" },
 };
 
 export default function RootLayout({

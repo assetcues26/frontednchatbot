@@ -91,6 +91,7 @@ export interface Citation {
 export interface Answer {
   answer: string;
   citations: Citation[];
+  follow_ups: string[];
   refused: boolean;
   retracted: boolean;
   cached: boolean;
@@ -202,10 +203,10 @@ export interface IngestResult {
 export const api = {
   me: () => request<Me>("/api/me"),
 
-  ask: (question: string) =>
+  ask: (question: string, history: string[] = []) =>
     request<Answer>("/api/ask", {
       method: "POST",
-      body: JSON.stringify({ question }),
+      body: JSON.stringify({ question, history }),
     }),
 
   requestAccess: (question: string, justification: string) =>
@@ -296,7 +297,12 @@ export const api = {
 export interface StreamHandlers {
   onSources?: (sources: { key: string; title: string; doc_type: string }[]) => void;
   onDelta: (text: string) => void;
-  onDone: (info: { citations: Citation[]; refused: boolean; cached: boolean }) => void;
+  onDone: (info: {
+    citations: Citation[];
+    follow_ups?: string[];
+    refused: boolean;
+    cached: boolean;
+  }) => void;
   onRetracted: (info: { answer: string; reason: string }) => void;
   onError: (message: string) => void;
 }
@@ -311,6 +317,7 @@ export interface StreamHandlers {
 export async function askStream(
   question: string,
   handlers: StreamHandlers,
+  history: string[] = [],
   signal?: AbortSignal,
 ): Promise<void> {
   const response = await fetch(`${BASE}/api/ask/stream`, {
@@ -319,7 +326,7 @@ export async function askStream(
       ...(await authHeaders()),
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ question, history }),
     signal,
   });
 
@@ -364,7 +371,14 @@ export async function askStream(
           handlers.onDelta(payload as string);
           break;
         case "done":
-          handlers.onDone(payload as { citations: Citation[]; refused: boolean; cached: boolean });
+          handlers.onDone(
+            payload as {
+              citations: Citation[];
+              follow_ups?: string[];
+              refused: boolean;
+              cached: boolean;
+            },
+          );
           break;
         case "retracted":
           handlers.onRetracted(payload as { answer: string; reason: string });

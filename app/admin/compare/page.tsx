@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { RoleBadge } from "@/components/Badges";
+import { ThinkingMark } from "@/components/Brand";
 import { Shell } from "@/components/Shell";
 import { api, type Comparison } from "@/lib/api";
 
@@ -87,16 +88,17 @@ function Compare() {
       </form>
 
       <div className="flex flex-wrap gap-2">
-        {PROBES.map((p) => (
+        {PROBES.map((p, i) => (
           <button
             key={p.q}
             title={p.why}
+            style={{ ["--i" as string]: i }}
             onClick={() => {
               setQuestion(p.q);
               void run(p.q);
             }}
             disabled={busy}
-            className="rounded-full border border-ink-200 bg-white px-3 py-1.5 text-xs text-ink-700 transition hover:border-brand-500 hover:text-brand-700 disabled:opacity-50"
+            className="stagger rounded-full border border-ink-200 bg-white px-3 py-1.5 text-xs text-ink-700 transition hover:-translate-y-0.5 hover:border-brand-500 hover:text-brand-700 hover:shadow-sm disabled:opacity-50"
           >
             {p.q}
           </button>
@@ -110,9 +112,14 @@ function Compare() {
       )}
 
       {busy && (
-        <p className="text-sm text-ink-500">
-          Running the question once per role…
-        </p>
+        <div className="card p-4">
+          <ThinkingMark label="Running the question once per role…" />
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="shimmer h-28 rounded-lg" />
+            ))}
+          </div>
+        </div>
       )}
 
       {result && (
@@ -129,10 +136,11 @@ function Compare() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {result.entries.map((entry) => (
+            {result.entries.map((entry, i) => (
               <div
                 key={entry.role_key}
-                className={`card flex flex-col p-4 ${
+                style={{ ["--i" as string]: i }}
+                className={`card stagger flex flex-col p-4 transition hover:-translate-y-0.5 hover:shadow-md ${
                   entry.refused ? "border-rose-200" : "border-emerald-200"
                 }`}
               >

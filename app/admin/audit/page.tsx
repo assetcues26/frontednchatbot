@@ -116,7 +116,11 @@ function Audit() {
       )}
 
       {loading ? (
-        <p className="text-sm text-ink-500">Loading…</p>
+        <div className="space-y-2">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="shimmer h-16 rounded-xl" />
+          ))}
+        </div>
       ) : rows.length === 0 ? (
         <p className="text-sm text-ink-500">No events yet.</p>
       ) : (
@@ -149,7 +153,7 @@ function Stat({
   }[tone];
 
   return (
-    <div className="card p-3" title={hint}>
+    <div className="card animate-pop p-3 transition hover:shadow-md" title={hint}>
       <div className={`text-2xl font-semibold tabular-nums ${toneClass}`}>
         {value}
       </div>

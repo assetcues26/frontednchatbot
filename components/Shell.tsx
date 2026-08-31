@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { api, ApiError, type Me } from "@/lib/api";
 import { getSupabase } from "@/lib/supabase";
 import { RoleBadges } from "./Badges";
+import { LogoAnimation, Mark, Wordmark } from "./Brand";
 
 /**
  * Authenticated shell.
@@ -61,7 +62,8 @@ export function Shell({
   if (error) {
     return (
       <Centered>
-        <div className="card max-w-md p-6">
+        <div className="card animate-pop max-w-md p-6">
+          <Wordmark className="mb-4 h-6 w-auto" />
           <h1 className="text-lg font-semibold">Something went wrong</h1>
           <p className="mt-2 text-sm text-ink-600">{error}</p>
           <p className="mt-4 text-xs text-ink-500">
@@ -79,7 +81,15 @@ export function Shell({
   if (!me) {
     return (
       <Centered>
-        <p className="text-sm text-ink-500">Loading…</p>
+        <div className="flex flex-col items-center gap-4">
+          <span className="relative size-16">
+            <span className="animate-halo absolute inset-0 rounded-full bg-gradient-to-tr from-flare-500/25 via-orchid-500/20 to-aqua-500/25 blur-md" />
+            <span className="relative size-16 overflow-hidden rounded-full bg-white ring-1 ring-ink-200">
+              <LogoAnimation round />
+            </span>
+          </span>
+          <p className="text-sm text-ink-500">Signing you in…</p>
+        </div>
       </Centered>
     );
   }
@@ -87,7 +97,7 @@ export function Shell({
   if (requireAdmin && !me.is_admin) {
     return (
       <Centered>
-        <div className="card max-w-md p-6">
+        <div className="card animate-pop max-w-md p-6">
           <h1 className="text-lg font-semibold">Administrators only</h1>
           <p className="mt-2 text-sm text-ink-600">
             Your roles: <RoleBadges roles={me.roles} />
@@ -117,11 +127,21 @@ export function Shell({
     <div className="min-h-screen">
       <header className="sticky top-0 z-20 border-b border-ink-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center gap-6 px-4 py-3">
-          <Link href="/chat" className="flex items-center gap-2">
-            <span className="grid size-7 place-items-center rounded-md bg-brand-600 text-xs font-bold text-white">
-              AC
+          <Link
+            href="/chat"
+            className="group flex shrink-0 items-center gap-2.5"
+            aria-label="AssetCues Assistant"
+          >
+            {/* The mark animates on hover: alive without being restless. */}
+            <span className="relative size-8 overflow-hidden rounded-lg bg-white ring-1 ring-ink-200/70 transition group-hover:ring-brand-300">
+              <Mark className="size-full object-contain p-0.5 transition duration-300 group-hover:opacity-0" />
+              <span className="absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100">
+                <LogoAnimation round />
+              </span>
             </span>
-            <span className="text-sm font-semibold">AssetCues Assistant</span>
+            <span className="hidden text-sm font-semibold tracking-tight sm:block">
+              Assistant
+            </span>
           </Link>
 
           <nav className="flex items-center gap-1">
@@ -156,7 +176,9 @@ export function Shell({
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-6">{children(me)}</main>
+      <main key={pathname} className="animate-rise mx-auto max-w-7xl px-4 py-6">
+        {children(me)}
+      </main>
     </div>
   );
 }

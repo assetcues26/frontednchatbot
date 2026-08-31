@@ -3,8 +3,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { RoleBadges } from "@/components/Badges";
+import { LogoAnimation, Mark, ThinkingMark } from "@/components/Brand";
 import { Shell } from "@/components/Shell";
 import { api, askStream, type Citation, type Me } from "@/lib/api";
+import {
+  clearTurns,
+  HISTORY_DEPTH,
+  historyForRequest,
+  loadTurns,
+  saveTurns,
+  type StoredTurn,
+} from "@/lib/history";
 
 const REFUSAL_PREFIX = "I don't have information on that";
 
@@ -13,12 +22,29 @@ interface Turn {
   question: string;
   answer: string;
   citations: Citation[];
+  followUps: string[];
   sources: { key: string; title: string; doc_type: string }[];
   streaming: boolean;
   refused: boolean;
   retracted: boolean;
   cached: boolean;
   error?: string;
+}
+
+/** Restore a stored turn into a finished (non-streaming) one. */
+function fromStored(t: StoredTurn): Turn {
+  return {
+    id: t.id,
+    question: t.question,
+    answer: t.answer,
+    citations: t.citations,
+    followUps: t.followUps,
+    sources: [],
+    streaming: false,
+    refused: t.refused,
+    retracted: false,
+    cached: false,
+  };
 }
 
 const SUGGESTIONS = [
@@ -36,7 +62,33 @@ function Chat({ me }: { me: Me }) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [question, setQuestion] = useState("");
   const [busy, setBusy] = useState(false);
+  const [restored, setRestored] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Bring the tab's thread back after a refresh. Keyed by user id, so signing
+  // in as someone else starts clean instead of inheriting the last thread.
+  useEffect(() => {
+    setTurns(loadTurns(me.user_id).map(fromStored));
+    setRestored(true);
+  }, [me.user_id]);
+
+  // Persist once a turn is finished. Mid-stream state is not worth storing.
+  useEffect(() => {
+    if (!restored) return;
+    const settled = turns.filter((t) => !t.streaming && !t.error);
+    saveTurns(
+      me.user_id,
+      settled.map((t) => ({
+        id: t.id,
+        question: t.question,
+        answer: t.answer,
+        citations: t.citations,
+        followUps: t.followUps,
+        refused: t.refused,
+        at: Date.now(),
+      })),
+    );
+  }, [turns, restored, me.user_id]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -48,6 +100,22 @@ function Chat({ me }: { me: Me }) {
       if (!trimmed || busy) return;
 
       const id = crypto.randomUUID();
+      // Snapshot the thread before this turn joins it, so the question is not
+      // handed back to the server as its own context.
+      const history = historyForRequest(
+        turns
+          .filter((t) => !t.streaming && !t.error)
+          .map((t) => ({
+            id: t.id,
+            question: t.question,
+            answer: t.answer,
+            citations: t.citations,
+            followUps: t.followUps,
+            refused: t.refused,
+            at: 0,
+          })),
+      );
+
       setTurns((prev) => [
         ...prev,
         {
@@ -55,6 +123,7 @@ function Chat({ me }: { me: Me }) {
           question: trimmed,
           answer: "",
           citations: [],
+          followUps: [],
           sources: [],
           streaming: true,
           refused: false,
@@ -71,7 +140,9 @@ function Chat({ me }: { me: Me }) {
         );
 
       try {
-        await askStream(trimmed, {
+        await askStream(
+          trimmed,
+          {
           onSources: (sources) => patch({ sources }),
           onDelta: (delta) =>
             setTurns((prev) =>
@@ -79,8 +150,14 @@ function Chat({ me }: { me: Me }) {
                 t.id === id ? { ...t, answer: t.answer + delta } : t,
               ),
             ),
-          onDone: ({ citations, refused, cached }) =>
-            patch({ citations, refused, cached, streaming: false }),
+          onDone: ({ citations, follow_ups, refused, cached }) =>
+            patch({
+              citations,
+              followUps: follow_ups ?? [],
+              refused,
+              cached,
+              streaming: false,
+            }),
           // Citation validation runs after generation, so an answer can be
           // withdrawn. Replace what was streamed rather than appending.
           onRetracted: ({ answer }) =>
@@ -92,7 +169,9 @@ function Chat({ me }: { me: Me }) {
               citations: [],
             }),
           onError: (message) => patch({ error: message, streaming: false }),
-        });
+          },
+          history,
+        );
       } catch (err) {
         patch({
           error: err instanceof Error ? err.message : "Request failed",
@@ -102,27 +181,36 @@ function Chat({ me }: { me: Me }) {
         setBusy(false);
       }
     },
-    [busy],
+    [busy, turns],
   );
 
   return (
     <div className="mx-auto max-w-3xl">
       {turns.length === 0 && (
-        <div className="card mb-6 p-6">
-          <h1 className="text-lg font-semibold">
-            Ask about the AssetCues product
-          </h1>
-          <p className="mt-1 text-sm text-ink-600">
+        <div className="card animate-pop mb-6 overflow-hidden p-6">
+          <div className="mb-4 flex items-center gap-3">
+            <span className="relative size-12 shrink-0">
+              <span className="animate-halo absolute inset-0 rounded-full bg-gradient-to-tr from-flare-500/25 via-orchid-500/20 to-aqua-500/25 blur-md" />
+              <span className="relative block size-12 overflow-hidden rounded-full bg-white ring-1 ring-ink-200">
+                <LogoAnimation round />
+              </span>
+            </span>
+            <h1 className="text-lg font-semibold">
+              Ask about the AssetCues product
+            </h1>
+          </div>
+          <p className="text-sm text-ink-600">
             Answers come only from documentation you are cleared to read, and
             every claim is cited. You are signed in as{" "}
             <RoleBadges roles={me.roles} />
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            {SUGGESTIONS.map((s) => (
+            {SUGGESTIONS.map((s, i) => (
               <button
                 key={s}
                 onClick={() => ask(s)}
-                className="rounded-full border border-ink-200 bg-white px-3 py-1.5 text-xs text-ink-700 transition hover:border-brand-500 hover:text-brand-700"
+                style={{ ["--i" as string]: i + 2 }}
+                className="stagger rounded-full border border-ink-200 bg-white px-3 py-1.5 text-xs text-ink-700 transition hover:-translate-y-0.5 hover:border-brand-500 hover:text-brand-700 hover:shadow-sm"
               >
                 {s}
               </button>
@@ -133,7 +221,7 @@ function Chat({ me }: { me: Me }) {
 
       <div className="space-y-6">
         {turns.map((turn) => (
-          <TurnView key={turn.id} turn={turn} />
+          <TurnView key={turn.id} turn={turn} onAsk={ask} busy={busy} />
         ))}
         <div ref={bottomRef} />
       </div>
@@ -145,6 +233,29 @@ function Chat({ me }: { me: Me }) {
         }}
         className="sticky bottom-0 mt-6 bg-ink-50 pb-4 pt-2"
       >
+        {turns.length > 0 && (
+          <div className="mb-2 flex items-center justify-between text-[11px] text-ink-400">
+            <span>
+              Follow-ups use your last{" "}
+              {Math.min(turns.filter((t) => !t.refused).length, HISTORY_DEPTH)}{" "}
+              question
+              {Math.min(turns.filter((t) => !t.refused).length, HISTORY_DEPTH) === 1
+                ? ""
+                : "s"}{" "}
+              for context. This thread stays in this tab only.
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                clearTurns(me.user_id);
+                setTurns([]);
+              }}
+              className="rounded px-2 py-0.5 transition hover:bg-ink-100 hover:text-ink-700"
+            >
+              New conversation
+            </button>
+          </div>
+        )}
         <div className="flex gap-2">
           <input
             className="input"
@@ -167,14 +278,22 @@ function Chat({ me }: { me: Me }) {
   );
 }
 
-function TurnView({ turn }: { turn: Turn }) {
+function TurnView({
+  turn,
+  onAsk,
+  busy,
+}: {
+  turn: Turn;
+  onAsk: (q: string) => void;
+  busy: boolean;
+}) {
   const isRefusal =
     turn.refused || turn.answer.trim().startsWith(REFUSAL_PREFIX);
 
   return (
-    <div>
+    <div className="animate-rise">
       <div className="mb-2 flex justify-end">
-        <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-brand-600 px-4 py-2 text-sm text-white">
+        <div className="animate-from-right max-w-[85%] rounded-2xl rounded-br-sm bg-brand-600 px-4 py-2 text-sm text-white shadow-sm">
           {turn.question}
         </div>
       </div>
@@ -182,10 +301,11 @@ function TurnView({ turn }: { turn: Turn }) {
       {turn.sources.length > 0 && !isRefusal && (
         <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[11px] text-ink-500">
           <span>Reading</span>
-          {dedupeTitles(turn.sources).map((title) => (
+          {dedupeTitles(turn.sources).map((title, i) => (
             <span
               key={title}
-              className="rounded-full bg-white px-2 py-0.5 ring-1 ring-inset ring-ink-200"
+              style={{ ["--i" as string]: i }}
+              className="stagger rounded-full bg-white px-2 py-0.5 ring-1 ring-inset ring-ink-200"
             >
               {title}
             </span>
@@ -193,7 +313,16 @@ function TurnView({ turn }: { turn: Turn }) {
         </div>
       )}
 
-      <div className="card p-4">
+      <div className="card flex gap-3 p-4">
+        <span className="mt-0.5 hidden size-7 shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-ink-200 sm:block">
+          {turn.streaming ? (
+            <LogoAnimation round />
+          ) : (
+            <Mark className="size-full object-contain p-0.5" />
+          )}
+        </span>
+
+        <div className="min-w-0 flex-1">
         {turn.error ? (
           <p className="text-sm text-rose-700">{turn.error}</p>
         ) : turn.answer ? (
@@ -211,11 +340,57 @@ function TurnView({ turn }: { turn: Turn }) {
                   Served from cache for your exact permissions.
                 </p>
               )}
+              {!turn.streaming && turn.followUps.length > 0 && (
+                <FollowUps
+                  questions={turn.followUps}
+                  onAsk={onAsk}
+                  busy={busy}
+                />
+              )}
             </>
           )
         ) : (
-          <TypingDots />
+          // Before the first token arrives, the brand animation is the wait.
+          <ThinkingMark label="Searching the documents you can read" />
         )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FollowUps({
+  questions,
+  onAsk,
+  busy,
+}: {
+  questions: string[];
+  onAsk: (q: string) => void;
+  busy: boolean;
+}) {
+  return (
+    <div className="mt-4 border-t border-ink-100 pt-3">
+      <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-ink-400">
+        Ask next
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {questions.map((q, i) => (
+          <button
+            key={q}
+            onClick={() => onAsk(q)}
+            disabled={busy}
+            style={{ ["--i" as string]: i }}
+            className="stagger group inline-flex items-center gap-1.5 rounded-full border border-ink-200 bg-white px-3 py-1.5 text-xs text-ink-700 transition hover:-translate-y-0.5 hover:border-brand-500 hover:text-brand-700 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {q}
+            <span
+              aria-hidden
+              className="text-ink-300 transition group-hover:translate-x-0.5 group-hover:text-brand-500"
+            >
+              &rarr;
+            </span>
+          </button>
+        ))}
       </div>
     </div>
   );

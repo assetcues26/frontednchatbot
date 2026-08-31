@@ -63,7 +63,15 @@ function Documents() {
     (d) => d.status !== "pending_review" && d.status !== "approved",
   );
 
-  if (loading) return <p className="text-sm text-ink-500">Loading…</p>;
+  if (loading) {
+    return (
+      <div className="space-y-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="shimmer h-20 rounded-xl" />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

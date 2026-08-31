@@ -40,7 +40,15 @@ function Users() {
     void load();
   }, [load]);
 
-  if (loading) return <p className="text-sm text-ink-500">Loading…</p>;
+  if (loading) {
+    return (
+      <div className="space-y-3">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="shimmer h-16 rounded-xl" />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

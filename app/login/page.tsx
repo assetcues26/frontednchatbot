@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { LogoAnimation, Wordmark } from "@/components/Brand";
 import { getSupabase } from "@/lib/supabase";
 
 export default function LoginPage() {
@@ -55,19 +56,42 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="grid min-h-screen place-items-center bg-ink-50 px-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-6 text-center">
-          <div className="mx-auto grid size-11 place-items-center rounded-xl bg-brand-600 text-sm font-bold text-white">
-            AC
+    <div className="relative grid min-h-screen place-items-center overflow-hidden bg-ink-50 px-4">
+      {/* Brand wash: the mark's own orange-to-teal ramp, far enough back that
+          it reads as atmosphere rather than decoration. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.28]"
+        style={{
+          background:
+            "radial-gradient(60rem 30rem at 15% -10%, var(--color-flare-100), transparent 60%)," +
+            "radial-gradient(50rem 28rem at 90% 110%, var(--color-aqua-100), transparent 60%)",
+        }}
+      />
+
+      <div className="relative w-full max-w-sm">
+        <div className="mb-7 flex flex-col items-center text-center">
+          <div className="animate-pop relative mb-5 h-28 w-40">
+            <div className="animate-halo absolute inset-0 rounded-[2rem] bg-gradient-to-tr from-flare-500/20 via-orchid-500/15 to-aqua-500/20 blur-xl" />
+            <LogoAnimation className="relative size-full object-contain" />
           </div>
-          <h1 className="mt-3 text-xl font-semibold">AssetCues Assistant</h1>
-          <p className="mt-1 text-sm text-ink-500">
-            Answers from the product documentation you are cleared to see.
+
+          <Wordmark className="animate-rise h-7 w-auto" />
+          <h1
+            className="animate-rise mt-4 text-lg font-semibold tracking-tight"
+            style={{ animationDelay: "80ms" }}
+          >
+            Documentation Assistant
+          </h1>
+          <p
+            className="animate-rise mt-1 text-sm text-ink-500"
+            style={{ animationDelay: "140ms" }}
+          >
+            Answers drawn only from what your role is cleared to see.
           </p>
         </div>
 
-        <div className="card p-6">
+        <div className="card animate-pop p-6" style={{ animationDelay: "180ms" }}>
           <button
             onClick={signInWithGoogle}
             disabled={busy}
@@ -126,7 +150,7 @@ export default function LoginPage() {
           </p>
 
           {error && (
-            <p className="mt-4 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-800">
+            <p className="animate-rise mt-4 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-800">
               {error}
             </p>
           )}

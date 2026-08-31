@@ -1,23 +1,37 @@
 @import "tailwindcss";
 
+/* Brand palette sampled from AssetCues-Logo.png rather than eyeballed:
+   the wordmark indigo is #3040A0, the mark runs orange #F05020 through
+   purple #403090 to teal #00B0B0. Those three are the accent ramp. */
 @theme {
-  --color-ink-50: #f6f7f9;
-  --color-ink-100: #eceef2;
-  --color-ink-200: #d5d9e2;
-  --color-ink-300: #b0b8c8;
-  --color-ink-400: #8590a8;
-  --color-ink-500: #66718c;
-  --color-ink-600: #515a72;
-  --color-ink-700: #42495c;
-  --color-ink-800: #393e4e;
-  --color-ink-900: #1e2230;
-  --color-ink-950: #12141d;
+  --color-ink-50: #f7f8fb;
+  --color-ink-100: #eef0f6;
+  --color-ink-200: #d9dde9;
+  --color-ink-300: #b4bccf;
+  --color-ink-400: #8792ad;
+  --color-ink-500: #67728e;
+  --color-ink-600: #515a74;
+  --color-ink-700: #42495e;
+  --color-ink-800: #383d4e;
+  --color-ink-900: #1d2135;
+  --color-ink-950: #11142280;
 
-  --color-brand-50: #eef4ff;
-  --color-brand-100: #dae5ff;
-  --color-brand-500: #3b6fe0;
-  --color-brand-600: #2b56c4;
-  --color-brand-700: #24469e;
+  --color-brand-50: #eef0fa;
+  --color-brand-100: #dce1f4;
+  --color-brand-200: #b9c2e9;
+  --color-brand-300: #8d9ad9;
+  --color-brand-400: #5f6fc4;
+  --color-brand-500: #4050ae;
+  --color-brand-600: #3040a0;
+  --color-brand-700: #283584;
+  --color-brand-800: #212b6a;
+  --color-brand-900: #1b2252;
+
+  --color-flare-500: #f05020;
+  --color-flare-100: #fdeae1;
+  --color-aqua-500: #00b0b0;
+  --color-aqua-100: #dcf5f5;
+  --color-orchid-500: #403090;
 }
 
 :root {
@@ -31,9 +45,8 @@ body {
     sans-serif;
 }
 
-/* Tailwind v4 note: `@apply` only accepts real utilities, so these are
-   declared with `@utility` rather than as plain classes composing each other.
-   That is what makes `@apply btn ...` legal below. */
+/* Tailwind v4: `@apply` only accepts real utilities, so shared classes are
+   declared with `@utility`. A plain `.btn-primary { @apply btn }` fails. */
 
 @utility badge {
   @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs
@@ -42,20 +55,21 @@ body {
 
 @utility btn {
   @apply inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2
-         text-sm font-medium transition disabled:cursor-not-allowed
-         disabled:opacity-50;
+         text-sm font-medium transition-all duration-200
+         disabled:cursor-not-allowed disabled:opacity-50;
 }
 
 @utility btn-primary {
-  @apply btn bg-brand-600 text-white hover:bg-brand-700;
+  @apply btn bg-brand-600 text-white shadow-sm
+         hover:bg-brand-700 hover:shadow-md active:scale-[0.98];
 }
 
 @utility btn-ghost {
-  @apply btn text-ink-700 hover:bg-ink-100;
+  @apply btn text-ink-700 hover:bg-ink-100 active:scale-[0.98];
 }
 
 @utility btn-danger {
-  @apply btn text-rose-700 hover:bg-rose-50;
+  @apply btn text-rose-700 hover:bg-rose-50 active:scale-[0.98];
 }
 
 @utility card {
@@ -64,23 +78,95 @@ body {
 
 @utility input {
   @apply w-full rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm
-         outline-none placeholder:text-ink-400
+         outline-none transition placeholder:text-ink-400
          focus:border-brand-500 focus:ring-2 focus:ring-brand-100;
 }
 
-/* Sensitivity levels get one consistent visual language everywhere they
-   appear -- document lists, citations, the audit console -- so "level 4" is
-   recognisable at a glance rather than something to look up. */
+/* Sensitivity levels share one visual language everywhere they appear, so
+   "level 4" is recognisable at a glance rather than something to look up. */
 @utility sens-1 { @apply bg-emerald-50 text-emerald-800 ring-emerald-200; }
-@utility sens-2 { @apply bg-sky-50 text-sky-800 ring-sky-200; }
+@utility sens-2 { @apply bg-aqua-100 text-teal-900 ring-teal-200; }
 @utility sens-3 { @apply bg-amber-50 text-amber-900 ring-amber-200; }
-@utility sens-4 { @apply bg-rose-50 text-rose-800 ring-rose-200; }
+@utility sens-4 { @apply bg-flare-100 text-orange-900 ring-orange-300; }
 
-@keyframes pulse-dot {
-  0%, 80%, 100% { opacity: 0.25; }
-  40% { opacity: 1; }
+/* ------------------------------------------------------------------ */
+/* Motion                                                              */
+/*                                                                     */
+/* Every animation below is plain CSS. No motion library, and nothing  */
+/* pulled from a component marketplace: this app's whole claim is that */
+/* access control holds, and unvetted third-party code in the bundle   */
+/* is a poor trade for an easing curve.                                */
+/* ------------------------------------------------------------------ */
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
 }
 
-@utility typing-dot {
-  animation: pulse-dot 1.2s infinite;
+@keyframes rise-in-scale {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes slide-from-right {
+  from { opacity: 0; transform: translateX(14px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes pulse-dot {
+  0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+  40%           { opacity: 1;   transform: scale(1); }
+}
+
+@keyframes sheen {
+  from { background-position: -180% 0; }
+  to   { background-position: 180% 0; }
+}
+
+@keyframes halo {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50%      { opacity: 0.6;  transform: scale(1.06); }
+}
+
+@utility animate-rise { animation: rise 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@utility animate-pop  { animation: rise-in-scale 0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@utility animate-from-right {
+  animation: slide-from-right 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@utility typing-dot { animation: pulse-dot 1.2s ease-in-out infinite; }
+@utility animate-halo { animation: halo 3.5s ease-in-out infinite; }
+
+/* Skeleton shimmer for loading rows. */
+@utility shimmer {
+  background: linear-gradient(
+    100deg,
+    var(--color-ink-100) 30%,
+    var(--color-ink-50) 50%,
+    var(--color-ink-100) 70%
+  );
+  background-size: 200% 100%;
+  animation: sheen 1.6s linear infinite;
+}
+
+/* Staggered reveal for lists. Set --i on each child. */
+@utility stagger {
+  animation: rise 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+/* The logo animation is dark artwork on a white field with no alpha
+   channel, so `multiply` is what makes the white disappear against any
+   light background. */
+@utility blend-logo {
+  mix-blend-mode: multiply;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
