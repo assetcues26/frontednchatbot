@@ -12,7 +12,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     getSupabase()
@@ -41,7 +40,6 @@ export default function LoginPage() {
   async function signInWithPassword(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
-    setNotice(null);
     setBusy(true);
     const { error: err } = await getSupabase().auth.signInWithPassword({
       email,
@@ -56,116 +54,130 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative grid min-h-screen place-items-center overflow-hidden bg-ink-50 px-4">
-      {/* Brand wash: the mark's own orange-to-teal ramp, far enough back that
-          it reads as atmosphere rather than decoration. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.28]"
-        style={{
-          background:
-            "radial-gradient(60rem 30rem at 15% -10%, var(--color-flare-100), transparent 60%)," +
-            "radial-gradient(50rem 28rem at 90% 110%, var(--color-aqua-100), transparent 60%)",
-        }}
-      />
+    <div className="grid min-h-screen lg:grid-cols-2">
+      {/* Left: the brand.
 
-      <div className="relative w-full max-w-sm">
-        <div className="mb-7 flex flex-col items-center text-center">
-          <div className="animate-pop relative mb-5 h-28 w-44">
-            {/* The halo has to reach past the artwork: the animation carries
-                its own opaque backdrop, so anything directly behind it is
-                covered. */}
-            <div className="animate-halo absolute -inset-6 rounded-full bg-gradient-to-tr from-flare-500/25 via-orchid-500/20 to-aqua-500/25 blur-2xl" />
-            <div className="relative size-full">
-              <LogoAnimation surface="var(--color-ink-50)" />
-            </div>
+          This half is pure white deliberately. The animation has no alpha
+          channel -- its artwork sits on a white field -- so the only way that
+          field disappears entirely is for what sits behind it to be the same
+          white. Any tint, gradient or wash here and the video's own rectangle
+          shows up as a visible box. */}
+      <section className="relative flex flex-col items-center justify-center bg-white px-8 py-14">
+        <div className="w-full max-w-md">
+          <div className="animate-pop relative mx-auto aspect-[733/480] w-full max-w-sm">
+            <LogoAnimation surface="#ffffff" />
           </div>
 
-          <Wordmark className="animate-rise h-7 w-auto" />
-          <h1
-            className="animate-rise mt-4 text-lg font-semibold tracking-tight"
-            style={{ animationDelay: "80ms" }}
-          >
+          <div className="mt-4 flex flex-col items-center text-center">
+            <Wordmark className="animate-rise h-8 w-auto" />
+            <p
+              className="animate-rise mt-6 max-w-sm text-sm leading-relaxed text-ink-500"
+              style={{ animationDelay: "120ms" }}
+            >
+              Every answer is drawn only from the documentation your role is
+              cleared to read, and every claim is cited back to its source.
+            </p>
+          </div>
+        </div>
+
+        {/* A hairline rather than a hard seam between the halves. */}
+        <div
+          aria-hidden
+          className="absolute inset-y-0 right-0 hidden w-px bg-gradient-to-b from-transparent via-ink-200 to-transparent lg:block"
+        />
+      </section>
+
+      {/* Right: the form, on the app's own surface colour. */}
+      <section className="relative flex items-center justify-center overflow-hidden bg-ink-50 px-6 py-14">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-60"
+          style={{
+            background:
+              "radial-gradient(40rem 24rem at 80% 0%, var(--color-aqua-100), transparent 65%)," +
+              "radial-gradient(36rem 22rem at 10% 100%, var(--color-flare-100), transparent 65%)",
+          }}
+        />
+
+        <div className="relative w-full max-w-sm">
+          <h1 className="text-xl font-semibold tracking-tight">
             Documentation Assistant
           </h1>
-          <p
-            className="animate-rise mt-1 text-sm text-ink-500"
-            style={{ animationDelay: "140ms" }}
-          >
-            Answers drawn only from what your role is cleared to see.
-          </p>
-        </div>
+          <p className="mt-1 text-sm text-ink-500">Sign in to continue.</p>
 
-        <div className="card animate-pop p-6" style={{ animationDelay: "180ms" }}>
-          <button
-            onClick={signInWithGoogle}
-            disabled={busy}
-            className="btn w-full border border-ink-200 bg-white hover:bg-ink-50"
-          >
-            <GoogleMark />
-            Sign in with Google
-          </button>
-          <p className="mt-2 text-center text-xs text-ink-500">
-            For AssetCues staff
-          </p>
-
-          <div className="my-5 flex items-center gap-3">
-            <div className="h-px flex-1 bg-ink-200" />
-            <span className="text-xs text-ink-400">or</span>
-            <div className="h-px flex-1 bg-ink-200" />
-          </div>
-
-          <form onSubmit={signInWithPassword} className="space-y-3">
-            <div>
-              <label htmlFor="email" className="mb-1 block text-xs font-medium">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                required
-                autoComplete="email"
-                className="input"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@company.com"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="mb-1 block text-xs font-medium">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                required
-                autoComplete="current-password"
-                className="input"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            <button type="submit" disabled={busy} className="btn-primary w-full">
-              {busy ? "Signing in…" : "Sign in"}
+          <div className="card animate-pop mt-6 p-6">
+            <button
+              onClick={signInWithGoogle}
+              disabled={busy}
+              className="btn w-full border border-ink-200 bg-white hover:bg-ink-50"
+            >
+              <GoogleMark />
+              Sign in with Google
             </button>
-          </form>
-
-          <p className="mt-3 text-center text-xs text-ink-500">
-            Customer accounts are created by an administrator.
-          </p>
-
-          {error && (
-            <p className="animate-rise mt-4 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-800">
-              {error}
+            <p className="mt-2 text-center text-xs text-ink-500">
+              For AssetCues staff
             </p>
-          )}
-          {notice && (
-            <p className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
-              {notice}
+
+            <div className="my-5 flex items-center gap-3">
+              <div className="h-px flex-1 bg-ink-200" />
+              <span className="text-xs text-ink-400">or</span>
+              <div className="h-px flex-1 bg-ink-200" />
+            </div>
+
+            <form onSubmit={signInWithPassword} className="space-y-3">
+              <div>
+                <label htmlFor="email" className="mb-1 block text-xs font-medium">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  className="input"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@company.com"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="password"
+                  className="mb-1 block text-xs font-medium"
+                >
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  required
+                  autoComplete="current-password"
+                  className="input"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={busy}
+                className="btn-primary w-full"
+              >
+                {busy ? "Signing in…" : "Sign in"}
+              </button>
+            </form>
+
+            <p className="mt-3 text-center text-xs text-ink-500">
+              Customer accounts are created by an administrator.
             </p>
-          )}
+
+            {error && (
+              <p className="animate-rise mt-4 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-800">
+                {error}
+              </p>
+            )}
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

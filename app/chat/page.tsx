@@ -6,6 +6,7 @@ import { RoleBadges } from "@/components/Badges";
 import { AnswerBody } from "@/components/AnswerBody";
 import { LogoAnimation, Mark } from "@/components/Brand";
 import { Composer } from "@/components/Composer";
+import { ReadAloud } from "@/components/ReadAloud";
 import { Shell } from "@/components/Shell";
 import { api, askStream, type Citation, type Me } from "@/lib/api";
 import {
@@ -339,10 +340,15 @@ function TurnView({
               {!turn.streaming && turn.citations.length > 0 && (
                 <CitationList citations={turn.citations} />
               )}
-              {turn.cached && (
-                <p className="mt-3 text-[11px] text-ink-400">
-                  Served from cache for your exact permissions.
-                </p>
+              {!turn.streaming && (
+                <div className="mt-3 flex items-center gap-2">
+                  <ReadAloud text={turn.answer} />
+                  {turn.cached && (
+                    <span className="text-[11px] text-ink-400">
+                      Served from cache for your exact permissions.
+                    </span>
+                  )}
+                </div>
               )}
               {!turn.streaming && turn.followUps.length > 0 && (
                 <FollowUps
