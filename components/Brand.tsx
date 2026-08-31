@@ -43,30 +43,47 @@ export function Mark({ className = "" }: { className?: string }) {
  *
  * `muted` and `playsInline` are not decoration -- without both, autoplay is
  * blocked on every modern browser and the poster frame is all anyone sees.
+ *
+ * On `surface`: the video has no alpha, so `mix-blend-mode: multiply` is what
+ * removes its white field. Multiply blends against the backdrop *within the
+ * current stacking context*, and an animated or filtered ancestor creates one
+ * -- so relying on the page background to be there is how you get a white box
+ * on a grey page. The wrapper below carries an opaque background of its own,
+ * which puts the correct backdrop inside the same group no matter what any
+ * ancestor does. Pass the colour of whatever the element is sitting on.
  */
 export function LogoAnimation({
   className = "",
   round = false,
+  surface = "#ffffff",
 }: {
   className?: string;
   round?: boolean;
+  surface?: string;
 }) {
   return (
-    <video
-      autoPlay
-      loop
-      muted
-      playsInline
-      preload="auto"
-      poster="/brand/logo-anim-poster.jpg"
+    <span
       aria-hidden
-      className={`blend-logo pointer-events-none select-none ${
-        round ? "size-full rounded-full object-cover" : ""
-      } ${className}`}
+      style={{ background: surface }}
+      className={`pointer-events-none block overflow-hidden ${
+        round ? "size-full rounded-full" : "size-full"
+      }`}
     >
-      <source src="/brand/logo-anim.webm" type="video/webm" />
-      <source src="/brand/logo-anim.mp4" type="video/mp4" />
-    </video>
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        poster="/brand/logo-anim-poster.jpg"
+        className={`blend-logo size-full select-none ${
+          round ? "object-cover" : "object-contain"
+        } ${className}`}
+      >
+        <source src="/brand/logo-anim.webm" type="video/webm" />
+        <source src="/brand/logo-anim.mp4" type="video/mp4" />
+      </video>
+    </span>
   );
 }
 

@@ -71,9 +71,14 @@ export default function LoginPage() {
 
       <div className="relative w-full max-w-sm">
         <div className="mb-7 flex flex-col items-center text-center">
-          <div className="animate-pop relative mb-5 h-28 w-40">
-            <div className="animate-halo absolute inset-0 rounded-[2rem] bg-gradient-to-tr from-flare-500/20 via-orchid-500/15 to-aqua-500/20 blur-xl" />
-            <LogoAnimation className="relative size-full object-contain" />
+          <div className="animate-pop relative mb-5 h-28 w-44">
+            {/* The halo has to reach past the artwork: the animation carries
+                its own opaque backdrop, so anything directly behind it is
+                covered. */}
+            <div className="animate-halo absolute -inset-6 rounded-full bg-gradient-to-tr from-flare-500/25 via-orchid-500/20 to-aqua-500/25 blur-2xl" />
+            <div className="relative size-full">
+              <LogoAnimation surface="var(--color-ink-50)" />
+            </div>
           </div>
 
           <Wordmark className="animate-rise h-7 w-auto" />
