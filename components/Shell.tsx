@@ -83,7 +83,7 @@ export function Shell({
       <div className="grid min-h-screen place-items-center bg-white px-4">
         <div className="flex flex-col items-center">
           <div className="aspect-[733/480] w-64">
-            <LogoAnimation surface="#ffffff" />
+            <LogoAnimation />
           </div>
           <p className="-mt-2 text-sm text-ink-500">Signing you in…</p>
         </div>
@@ -133,7 +133,7 @@ export function Shell({
             <span className="relative size-9 overflow-hidden rounded-lg bg-white ring-1 ring-ink-200/70 transition group-hover:ring-brand-300">
               <Mark className="size-full object-contain p-1 transition duration-300 group-hover:opacity-0" />
               <span className="absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100">
-                <LogoAnimation surface="#ffffff" />
+                <LogoAnimation />
               </span>
             </span>
             <span className="hidden text-sm font-semibold tracking-tight sm:block">

@@ -54,32 +54,41 @@ export function Mark({ className = "" }: { className?: string }) {
  */
 export function LogoAnimation({
   className = "",
-  surface = "#ffffff",
+  surface,
 }: {
   className?: string;
+  /**
+   * Only needed for the MP4 fallback path, which still carries a white field.
+   * Leave it unset and nothing is painted behind the video at all.
+   */
   surface?: string;
 }) {
   return (
     <span
       aria-hidden
-      style={{ background: surface }}
+      style={surface ? { background: surface } : undefined}
       className="pointer-events-none block size-full overflow-hidden"
     >
-      {/* Always `object-contain`, never `object-cover`. The artwork is
-          landscape; covering a square or a circle with it crops the mark's
-          outer dots off, which is the one thing a logo may not do. Contain
-          letterboxes instead, and the letterboxing is the same white as the
-          surface, so it is invisible. */}
+      {/* Source order matters. The first is VP9 with a real alpha channel,
+          keyed from the original's white field -- it sits on any colour with
+          nothing behind it. The MP4 is the fallback for browsers without
+          alpha WebM (Safari), and still has the white field, which is what
+          `surface` and the multiply blend are for.
+
+          Always `object-contain`, never `object-cover`: the artwork is
+          landscape, so covering a square crops the mark's outer dots off. */}
       <video
         autoPlay
         loop
         muted
         playsInline
         preload="auto"
-        poster="/brand/logo-anim-poster.jpg"
-        className={`blend-logo size-full select-none object-contain ${className}`}
+        poster="/brand/logo-anim-poster.png"
+        className={`size-full select-none object-contain ${
+          surface ? "blend-logo" : ""
+        } ${className}`}
       >
-        <source src="/brand/logo-anim.webm" type="video/webm" />
+        <source src="/brand/logo-anim-alpha.webm" type="video/webm" />
         <source src="/brand/logo-anim.mp4" type="video/mp4" />
       </video>
     </span>
@@ -94,7 +103,7 @@ export function ThinkingMark({ label = "Thinking" }: { label?: string }) {
   return (
     <span className="inline-flex items-center gap-2.5" aria-label={label}>
       <span className="block aspect-[733/480] w-12 shrink-0">
-        <LogoAnimation surface="#ffffff" />
+        <LogoAnimation />
       </span>
       <span className="text-xs text-ink-500">{label}</span>
     </span>

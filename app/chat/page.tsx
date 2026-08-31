@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { RoleBadges } from "@/components/Badges";
 import { AnswerBody } from "@/components/AnswerBody";
-import { LogoAnimation, Mark } from "@/components/Brand";
+import { LogoAnimation } from "@/components/Brand";
 import { Composer } from "@/components/Composer";
 import { Feedback } from "@/components/Feedback";
 import { ReadAloud } from "@/components/ReadAloud";
@@ -213,7 +213,7 @@ function Chat({ me }: { me: Me }) {
         <div className="card animate-pop mb-6 overflow-hidden p-6">
           <div className="mb-4 flex items-center gap-3">
             <span className="block aspect-[733/480] w-24 shrink-0">
-              <LogoAnimation surface="#ffffff" />
+              <LogoAnimation />
             </span>
             <h1 className="text-lg font-semibold">
               Ask about the AssetCues product
@@ -322,15 +322,7 @@ function TurnView({
         </div>
       )}
 
-      <div className="card flex gap-3 p-4">
-        <span className="mt-0.5 hidden size-8 shrink-0 overflow-hidden rounded-lg bg-white ring-1 ring-ink-200 sm:block">
-          {turn.streaming ? (
-            <LogoAnimation surface="#ffffff" />
-          ) : (
-            <Mark className="size-full object-contain p-1" />
-          )}
-        </span>
-
+      <div className="card p-4">
         <div className="min-w-0 flex-1">
         {turn.error ? (
           <p className="text-sm text-rose-700">{turn.error}</p>

@@ -154,9 +154,8 @@ body {
   animation-delay: calc(var(--i, 0) * 45ms);
 }
 
-/* The logo animation is dark artwork on a white field with no alpha
-   channel, so `multiply` is what makes the white disappear against any
-   light background. */
+/* Only for the MP4 fallback, which still carries the original white field.
+   The WebM served first has a real alpha channel and needs no blending. */
 @utility blend-logo {
   mix-blend-mode: multiply;
 }

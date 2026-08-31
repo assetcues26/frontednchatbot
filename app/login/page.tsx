@@ -53,14 +53,14 @@ export default function LoginPage() {
     router.replace("/chat");
   }
 
-  // The whole page is the animation's own white. Its artwork has no alpha
-  // channel, so the field around it only disappears when what sits behind is
-  // the same white -- no split, no wash, no tint anywhere on this screen.
+  // One column on white. The animation now carries a real alpha channel, so
+  // it would sit on any colour; white is kept here because it is what the
+  // artwork was drawn against and the wordmark below reads best on it.
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-white px-6 py-12">
       <div className="w-full max-w-md">
         <div className="animate-pop mx-auto aspect-[733/480] w-full max-w-md">
-          <LogoAnimation surface="#ffffff" />
+          <LogoAnimation />
         </div>
 
         <div className="-mt-2 flex flex-col items-center text-center">
