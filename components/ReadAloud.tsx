@@ -2,6 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import {
+  loadRate,
+  loadVoiceURI,
+  resolveVoice,
+  subscribeToVoices,
+} from "@/lib/voice";
+import { VoicePicker } from "./VoicePicker";
+
 /**
  * Reads an answer aloud with the browser's own speech synthesis.
  *
@@ -35,12 +43,12 @@ export function speakableText(markdown: string): string {
 export function ReadAloud({ text }: { text: string }) {
   const [supported, setSupported] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const utterance = useRef<SpeechSynthesisUtterance | null>(null);
 
   useEffect(() => {
-    setSupported(
-      typeof window !== "undefined" && "speechSynthesis" in window,
-    );
+    setSupported(typeof window !== "undefined" && "speechSynthesis" in window);
+    return subscribeToVoices(setVoices);
   }, []);
 
   // Leaving the page mid-sentence should not leave a voice talking: speech
@@ -71,8 +79,16 @@ export function ReadAloud({ text }: { text: string }) {
     synth.cancel();
 
     const u = new SpeechSynthesisUtterance(spoken);
-    u.lang = navigator.language || "en-US";
-    u.rate = 1.02;
+    // Read the preference at speak time, not at mount: the picker may have
+    // changed it since this answer rendered.
+    const voice = resolveVoice(voices, loadVoiceURI());
+    if (voice) {
+      u.voice = voice;
+      u.lang = voice.lang;
+    } else {
+      u.lang = navigator.language || "en-US";
+    }
+    u.rate = loadRate();
     u.onend = () => setSpeaking(false);
     u.onerror = () => setSpeaking(false);
 
@@ -82,20 +98,31 @@ export function ReadAloud({ text }: { text: string }) {
   }
 
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      aria-pressed={speaking}
-      title={speaking ? "Stop reading" : "Read this answer aloud"}
-      className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] transition ${
-        speaking
-          ? "bg-brand-50 text-brand-700"
-          : "text-ink-400 hover:bg-ink-100 hover:text-ink-700"
-      }`}
-    >
-      {speaking ? <StopIcon /> : <SpeakerIcon />}
-      {speaking ? "Stop" : "Listen"}
-    </button>
+    <span className="inline-flex items-center gap-0.5">
+      <button
+        type="button"
+        onClick={toggle}
+        aria-pressed={speaking}
+        title={speaking ? "Stop reading" : "Read this answer aloud"}
+        className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] transition ${
+          speaking
+            ? "bg-brand-50 text-brand-700"
+            : "text-ink-400 hover:bg-ink-100 hover:text-ink-700"
+        }`}
+      >
+        {speaking ? <StopIcon /> : <SpeakerIcon />}
+        {speaking ? "Stop" : "Listen"}
+      </button>
+      <VoicePicker
+        onChange={() => {
+          // A change mid-sentence would otherwise keep the old voice talking.
+          if (speaking) {
+            window.speechSynthesis.cancel();
+            setSpeaking(false);
+          }
+        }}
+      />
+    </span>
   );
 }
 
