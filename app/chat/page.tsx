@@ -212,7 +212,7 @@ function Chat({ me }: { me: Me }) {
       {turns.length === 0 && (
         <div className="card animate-pop mb-6 overflow-hidden p-6">
           <div className="mb-4 flex items-center gap-3">
-            <span className="block aspect-[733/480] w-24 shrink-0">
+            <span className="block aspect-[732/480] w-10 shrink-0">
               <LogoAnimation />
             </span>
             <h1 className="text-lg font-semibold">

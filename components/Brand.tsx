@@ -102,7 +102,7 @@ export function LogoAnimation({
 export function ThinkingMark({ label = "Thinking" }: { label?: string }) {
   return (
     <span className="inline-flex items-center gap-2.5" aria-label={label}>
-      <span className="block aspect-[733/480] w-12 shrink-0">
+      <span className="block aspect-[732/480] w-8 shrink-0">
         <LogoAnimation />
       </span>
       <span className="text-xs text-ink-500">{label}</span>

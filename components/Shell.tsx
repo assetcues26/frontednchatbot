@@ -82,10 +82,10 @@ export function Shell({
     return (
       <div className="grid min-h-screen place-items-center bg-white px-4">
         <div className="flex flex-col items-center">
-          <div className="aspect-[733/480] w-64">
+          <div className="aspect-[732/480] w-28">
             <LogoAnimation />
           </div>
-          <p className="-mt-2 text-sm text-ink-500">Signing you in…</p>
+          <p className="mt-2 text-sm text-ink-500">Signing you in…</p>
         </div>
       </div>
     );

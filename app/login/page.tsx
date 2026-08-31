@@ -59,11 +59,11 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-white px-6 py-12">
       <div className="w-full max-w-md">
-        <div className="animate-pop mx-auto aspect-[733/480] w-full max-w-md">
+        <div className="animate-pop mx-auto aspect-[732/480] w-44">
           <LogoAnimation />
         </div>
 
-        <div className="-mt-2 flex flex-col items-center text-center">
+        <div className="mt-1 flex flex-col items-center text-center">
           <Wordmark className="animate-rise h-8 w-auto" />
           <h1
             className="animate-rise mt-6 text-xl font-semibold tracking-tight"
