@@ -33,10 +33,20 @@ export function Shell({
     api
       .me()
       .then((value) => !cancelled && setMe(value))
-      .catch((err: unknown) => {
+      .catch(async (err: unknown) => {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 401) {
-          router.replace("/login");
+          // Supabase may hold a perfectly valid session while the API still
+          // rejects the token -- a JWT the backend cannot verify, or an
+          // account with no `users` row yet. Redirecting to /login would
+          // bounce straight back here (login sees the session and forwards),
+          // so clear the session and say what happened instead.
+          await getSupabase().auth.signOut();
+          setError(
+            "You are signed in with Supabase, but the API did not accept the " +
+              "session. Your account may not have been set up in the " +
+              "application yet. Please sign in again, or ask an administrator.",
+          );
           return;
         }
         setError(
@@ -58,6 +68,9 @@ export function Shell({
             If this persists, check that the API is running and that
             NEXT_PUBLIC_API_BASE_URL points at it.
           </p>
+          <Link href="/login" className="btn-primary mt-4">
+            Back to sign in
+          </Link>
         </div>
       </Centered>
     );
