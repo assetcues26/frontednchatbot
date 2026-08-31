@@ -13,6 +13,7 @@ const FILTERS = [
   { label: "Anomalies", value: "security_anomaly" },
   { label: "Retractions", value: "citation_rejected" },
   { label: "Injections", value: "injection_detected" },
+  { label: "Feedback", value: "feedback" },
   { label: "Access changes", value: "acl_changed" },
   { label: "Deletions", value: "document_deleted" },
 ];
@@ -64,7 +65,7 @@ function Audit() {
       </div>
 
       {summary && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
           <Stat label="Questions" value={summary.total_queries} />
           <Stat label="Refusals" value={summary.total_refusals} />
           <Stat
@@ -84,6 +85,18 @@ function Audit() {
             value={summary.injections_detected}
             tone={summary.injections_detected > 0 ? "warn" : "good"}
             hint="Instruction-like text found inside a document."
+          />
+          <Stat
+            label="Rated helpful"
+            value={summary.feedback_up}
+            tone={summary.feedback_up > 0 ? "good" : "neutral"}
+            hint="Answers a reader marked as useful."
+          />
+          <Stat
+            label="Rated wrong"
+            value={summary.feedback_down}
+            tone={summary.feedback_down > 0 ? "warn" : "neutral"}
+            hint="Answers a reader flagged. Filter to Feedback to read the comments."
           />
           <Stat
             label="ACL version"
@@ -192,9 +205,26 @@ function EventRow({ row }: { row: AuditRow }) {
             <RoleBadges roles={row.actor_role_keys} />
           </div>
 
+          {typeof row.detail.rating === "string" && (
+            <span
+              className={`badge mr-1 ${
+                row.detail.rating === "up"
+                  ? "bg-emerald-50 text-emerald-800 ring-emerald-200"
+                  : "bg-rose-50 text-rose-800 ring-rose-200"
+              }`}
+            >
+              {row.detail.rating === "up" ? "helpful" : "flagged"}
+            </span>
+          )}
+
           {typeof row.detail.question === "string" && (
             <p className="mt-1 truncate text-xs text-ink-600">
               &ldquo;{row.detail.question}&rdquo;
+            </p>
+          )}
+          {typeof row.detail.comment === "string" && row.detail.comment && (
+            <p className="mt-1 text-xs text-ink-700">
+              Comment: {row.detail.comment}
             </p>
           )}
 

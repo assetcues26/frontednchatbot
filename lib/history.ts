@@ -30,6 +30,8 @@ export interface StoredTurn {
   answer: string;
   citations: Citation[];
   followUps: string[];
+  /** Audit row id, so a rating still works after a refresh. */
+  turnId: string;
   refused: boolean;
   at: number;
 }

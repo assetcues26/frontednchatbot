@@ -6,6 +6,7 @@ import { RoleBadges } from "@/components/Badges";
 import { AnswerBody } from "@/components/AnswerBody";
 import { LogoAnimation, Mark } from "@/components/Brand";
 import { Composer } from "@/components/Composer";
+import { Feedback } from "@/components/Feedback";
 import { ReadAloud } from "@/components/ReadAloud";
 import { Shell } from "@/components/Shell";
 import { api, askStream, type Citation, type Me } from "@/lib/api";
@@ -39,6 +40,7 @@ interface Turn {
   answer: string;
   citations: Citation[];
   followUps: string[];
+  turnId: string;
   sources: { key: string; title: string; doc_type: string }[];
   streaming: boolean;
   refused: boolean;
@@ -55,6 +57,7 @@ function fromStored(t: StoredTurn): Turn {
     answer: t.answer,
     citations: t.citations,
     followUps: t.followUps,
+    turnId: t.turnId ?? "",
     sources: [],
     streaming: false,
     refused: t.refused,
@@ -100,6 +103,7 @@ function Chat({ me }: { me: Me }) {
         answer: t.answer,
         citations: t.citations,
         followUps: t.followUps,
+        turnId: t.turnId,
         refused: t.refused,
         at: Date.now(),
       })),
@@ -127,6 +131,7 @@ function Chat({ me }: { me: Me }) {
             answer: t.answer,
             citations: t.citations,
             followUps: t.followUps,
+            turnId: t.turnId,
             refused: t.refused,
             at: 0,
           })),
@@ -140,6 +145,7 @@ function Chat({ me }: { me: Me }) {
           answer: "",
           citations: [],
           followUps: [],
+          turnId: "",
           sources: [],
           streaming: true,
           refused: false,
@@ -166,8 +172,9 @@ function Chat({ me }: { me: Me }) {
                 t.id === id ? { ...t, answer: t.answer + delta } : t,
               ),
             ),
-          onDone: ({ citations, follow_ups, refused, cached }) =>
+          onDone: ({ turn_id, citations, follow_ups, refused, cached }) =>
             patch({
+              turnId: turn_id ?? "",
               citations,
               followUps: follow_ups ?? [],
               refused,
@@ -341,8 +348,9 @@ function TurnView({
                 <CitationList citations={turn.citations} />
               )}
               {!turn.streaming && (
-                <div className="mt-3 flex items-center gap-2">
+                <div className="mt-3 flex flex-wrap items-start gap-2">
                   <ReadAloud text={turn.answer} />
+                  <Feedback turnId={turn.turnId} answer={turn.answer} />
                   {turn.cached && (
                     <span className="text-[11px] text-ink-400">
                       Served from cache for your exact permissions.

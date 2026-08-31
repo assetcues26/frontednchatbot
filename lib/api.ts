@@ -90,6 +90,7 @@ export interface Citation {
 
 export interface Answer {
   answer: string;
+  turn_id: string;
   citations: Citation[];
   follow_ups: string[];
   refused: boolean;
@@ -160,6 +161,8 @@ export interface AuditRow {
 
 export interface AuditSummary {
   total_queries: number;
+  feedback_up: number;
+  feedback_down: number;
   total_refusals: number;
   total_anomalies: number;
   total_retractions: number;
@@ -207,6 +210,24 @@ export const api = {
     request<Answer>("/api/ask", {
       method: "POST",
       body: JSON.stringify({ question, history }),
+    }),
+
+  /** Rate one answer. Only the turn id travels; the server reads the rest
+   *  from that turn's audit row. */
+  feedback: (
+    turnId: string,
+    rating: "up" | "down",
+    comment = "",
+    answer = "",
+  ) =>
+    request<{ status: string; rating: string }>("/api/feedback", {
+      method: "POST",
+      body: JSON.stringify({
+        turn_id: turnId,
+        rating,
+        comment,
+        answer: answer.slice(0, 8000),
+      }),
     }),
 
   requestAccess: (question: string, justification: string) =>
@@ -298,6 +319,7 @@ export interface StreamHandlers {
   onSources?: (sources: { key: string; title: string; doc_type: string }[]) => void;
   onDelta: (text: string) => void;
   onDone: (info: {
+    turn_id?: string;
     citations: Citation[];
     follow_ups?: string[];
     refused: boolean;
@@ -373,6 +395,7 @@ export async function askStream(
         case "done":
           handlers.onDone(
             payload as {
+              turn_id?: string;
               citations: Citation[];
               follow_ups?: string[];
               refused: boolean;
