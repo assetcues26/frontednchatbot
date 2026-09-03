@@ -33,6 +33,9 @@ export interface StoredTurn {
   /** Audit row id, so a rating still works after a refresh. */
   turnId: string;
   refused: boolean;
+  /** Areas offered when the question straddled several, so the chips survive
+   *  a refresh instead of leaving an unanswerable question on screen. */
+  clarify: string[];
   at: number;
 }
 

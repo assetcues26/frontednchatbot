@@ -259,7 +259,7 @@ function DocumentCard({
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-500">
             <span>{doc.doc_type}</span>
-            {doc.module && <span>· {doc.module}</span>}
+            {doc.capability && <span>· {doc.capability}</span>}
             <span>· {doc.chunk_count} chunks</span>
             <span>· v{doc.version}</span>
             <span>· {(doc.byte_size / 1024).toFixed(0)} KB</span>
@@ -281,6 +281,8 @@ function DocumentCard({
 
       {open && (
         <div className="border-t border-ink-100 bg-ink-50/50 p-4">
+          <EnrichmentPanel doc={doc} />
+
           {doc.classifier_rationale && (
             <div className="mb-4 rounded-lg bg-white p-3 text-xs ring-1 ring-inset ring-ink-200">
               <p className="mb-1 font-medium text-ink-700">
@@ -408,3 +410,81 @@ function DocumentCard({
     </div>
   );
 }
+
+/**
+ * What the assistant understands this document to be.
+ *
+ * Worth showing an administrator because it is what decides whether a
+ * question about "open items" reaches this document or its lookalike in
+ * another area -- and because a document with no capability is one the router
+ * cannot separate from anything.
+ *
+ * None of it affects who may read the document. Access is the grants below.
+ */
+function EnrichmentPanel({ doc }: { doc: DocumentRow }) {
+  if (!doc.enriched_at) {
+    return (
+      <div className="mb-4 rounded-lg border border-dashed border-ink-300 bg-white p-3 text-xs text-ink-500">
+        Not enriched yet. Retrieval still works from the document text; run{" "}
+        <code className="rounded bg-ink-100 px-1 py-0.5">
+          acues-ingest enrich
+        </code>{" "}
+        to have the assistant read it and place it in context.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-4 rounded-lg bg-white p-3 text-xs ring-1 ring-inset ring-ink-200">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <span className="font-medium text-ink-700">What this document is</span>
+        {doc.capability && (
+          <span className="rounded-full bg-brand-50 px-2 py-0.5 font-medium text-brand-700 ring-1 ring-inset ring-brand-200">
+            {doc.capability}
+          </span>
+        )}
+        {doc.product_domain && (
+          <span className="rounded-full bg-ink-100 px-2 py-0.5 text-ink-600">
+            {doc.product_domain}
+          </span>
+        )}
+      </div>
+
+      {doc.summary && <p className="text-ink-600">{doc.summary}</p>}
+
+      {doc.key_terms.length > 0 && (
+        <div className="mt-2">
+          <p className="mb-1 text-ink-500">Terms this document defines</p>
+          <div className="flex flex-wrap gap-1">
+            {doc.key_terms.map((term) => (
+              <span
+                key={term}
+                className="rounded bg-ink-100 px-1.5 py-0.5 text-ink-700"
+              >
+                {term}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {doc.distinguishing_points.length > 0 && (
+        <div className="mt-2">
+          <p className="mb-1 text-ink-500">
+            What separates it from documents covering similar ground
+          </p>
+          <ul className="list-disc space-y-0.5 pl-4 text-ink-600">
+            {doc.distinguishing_points.map((point) => (
+              <li key={point}>{point}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <p className="mt-2 text-[11px] text-ink-400">
+        Read by the assistant on {new Date(doc.enriched_at).toLocaleString()}
+      </p>
+    </div>
+  );
+}
+

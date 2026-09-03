@@ -41,6 +41,9 @@ interface Turn {
   citations: Citation[];
   followUps: string[];
   turnId: string;
+  // When the question fitted several parts of the product equally well, the
+  // answer above is a question and these are the areas to choose from.
+  clarify: string[];
   sources: { key: string; title: string; doc_type: string }[];
   streaming: boolean;
   refused: boolean;
@@ -58,6 +61,7 @@ function fromStored(t: StoredTurn): Turn {
     citations: t.citations,
     followUps: t.followUps,
     turnId: t.turnId ?? "",
+    clarify: t.clarify ?? [],
     sources: [],
     streaming: false,
     refused: t.refused,
@@ -65,6 +69,16 @@ function fromStored(t: StoredTurn): Turn {
     cached: false,
   };
 }
+
+/**
+ * Sent as the capability to mean "I saw the choices, use all of them".
+ *
+ * It must differ from sending nothing: an unscoped question is one that has
+ * not been routed yet and can still come back as another clarification, which
+ * would leave this button looping. Matches ALL_CAPABILITIES in
+ * app/rag/routing.py.
+ */
+const ALL_AREAS = "*";
 
 const SUGGESTIONS = [
   "What are the six Access Categories?",
@@ -105,6 +119,7 @@ function Chat({ me }: { me: Me }) {
         followUps: t.followUps,
         turnId: t.turnId,
         refused: t.refused,
+        clarify: t.clarify,
         at: Date.now(),
       })),
     );
@@ -115,7 +130,7 @@ function Chat({ me }: { me: Me }) {
   }, [turns]);
 
   const ask = useCallback(
-    async (text: string) => {
+    async (text: string, capability = "") => {
       const trimmed = text.trim();
       if (!trimmed || busy) return;
 
@@ -133,6 +148,7 @@ function Chat({ me }: { me: Me }) {
             followUps: t.followUps,
             turnId: t.turnId,
             refused: t.refused,
+            clarify: t.clarify,
             at: 0,
           })),
       );
@@ -146,6 +162,7 @@ function Chat({ me }: { me: Me }) {
           citations: [],
           followUps: [],
           turnId: "",
+          clarify: [],
           sources: [],
           streaming: true,
           refused: false,
@@ -172,11 +189,12 @@ function Chat({ me }: { me: Me }) {
                 t.id === id ? { ...t, answer: t.answer + delta } : t,
               ),
             ),
-          onDone: ({ turn_id, citations, follow_ups, refused, cached }) =>
+          onDone: ({ turn_id, citations, follow_ups, refused, cached, clarify }) =>
             patch({
               turnId: turn_id ?? "",
               citations,
               followUps: follow_ups ?? [],
+              clarify: clarify ?? [],
               refused,
               cached,
               streaming: false,
@@ -194,6 +212,8 @@ function Chat({ me }: { me: Me }) {
           onError: (message) => patch({ error: message, streaming: false }),
           },
           history,
+          undefined,
+          capability,
         );
       } catch (err) {
         patch({
@@ -293,7 +313,7 @@ function TurnView({
   busy,
 }: {
   turn: Turn;
-  onAsk: (q: string) => void;
+  onAsk: (q: string, capability?: string) => void;
   busy: boolean;
 }) {
   const isRefusal =
@@ -347,13 +367,23 @@ function TurnView({
                   )}
                 </div>
               )}
-              {!turn.streaming && turn.followUps.length > 0 && (
-                <FollowUps
-                  questions={turn.followUps}
+              {!turn.streaming && turn.clarify.length > 0 && (
+                <ClarifyChoices
+                  question={turn.question}
+                  choices={turn.clarify}
                   onAsk={onAsk}
                   busy={busy}
                 />
               )}
+              {!turn.streaming &&
+                turn.clarify.length === 0 &&
+                turn.followUps.length > 0 && (
+                  <FollowUps
+                    questions={turn.followUps}
+                    onAsk={onAsk}
+                    busy={busy}
+                  />
+                )}
             </>
           )
         ) : (
@@ -378,13 +408,63 @@ function TurnView({
   );
 }
 
+/**
+ * The areas to choose between when a question straddled several of them.
+ *
+ * Clicking one re-asks the SAME question scoped to that area, rather than
+ * sending the area name as a new question -- so the answer that comes back
+ * addresses what was actually asked.
+ *
+ * The scope is only ever a narrowing of what the reader could already see:
+ * choosing an area cannot reveal a document their role does not grant.
+ */
+function ClarifyChoices({
+  question,
+  choices,
+  onAsk,
+  busy,
+}: {
+  question: string;
+  choices: string[];
+  onAsk: (q: string, capability?: string) => void;
+  busy: boolean;
+}) {
+  return (
+    <div className="mt-4 border-t border-ink-100 pt-3">
+      <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-ink-400">
+        Choose an area
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {choices.map((choice, i) => (
+          <button
+            key={choice}
+            onClick={() => onAsk(question, choice)}
+            disabled={busy}
+            style={{ ["--i" as string]: i }}
+            className="stagger inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 transition hover:-translate-y-0.5 hover:border-brand-500 hover:bg-brand-100 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {choice}
+          </button>
+        ))}
+        <button
+          onClick={() => onAsk(question, ALL_AREAS)}
+          disabled={busy}
+          className="inline-flex items-center rounded-full border border-ink-200 bg-white px-3 py-1.5 text-xs text-ink-600 transition hover:-translate-y-0.5 hover:border-ink-400 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Answer from all of them
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function FollowUps({
   questions,
   onAsk,
   busy,
 }: {
   questions: string[];
-  onAsk: (q: string) => void;
+  onAsk: (q: string, capability?: string) => void;
   busy: boolean;
 }) {
   return (

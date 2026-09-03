@@ -98,6 +98,13 @@ export interface Answer {
   cached: boolean;
   latency_ms: number;
   chunks_used: number;
+  /**
+   * Set when the question fitted several parts of the product equally well.
+   * `answer` is then a question, and these are the choices to offer; re-ask
+   * with one of them as `capability`.
+   */
+  clarify: string[];
+  capability: string;
 }
 
 export interface DocumentRow {
@@ -116,6 +123,13 @@ export interface DocumentRow {
   classifier_rationale: string;
   granted_role_keys: string[];
   chunk_count: number;
+  /** What the enrichment pass learned. `enriched_at` is null until it runs. */
+  capability: string;
+  product_domain: string;
+  summary: string;
+  key_terms: string[];
+  distinguishing_points: string[];
+  enriched_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -206,10 +220,10 @@ export interface IngestResult {
 export const api = {
   me: () => request<Me>("/api/me"),
 
-  ask: (question: string, history: string[] = []) =>
+  ask: (question: string, history: string[] = [], capability = "") =>
     request<Answer>("/api/ask", {
       method: "POST",
-      body: JSON.stringify({ question, history }),
+      body: JSON.stringify({ question, history, capability }),
     }),
 
   /** Rate one answer. Only the turn id travels; the server reads the rest
@@ -324,6 +338,8 @@ export interface StreamHandlers {
     follow_ups?: string[];
     refused: boolean;
     cached: boolean;
+    clarify?: string[];
+    capability?: string;
   }) => void;
   onRetracted: (info: { answer: string; reason: string }) => void;
   onError: (message: string) => void;
@@ -341,6 +357,7 @@ export async function askStream(
   handlers: StreamHandlers,
   history: string[] = [],
   signal?: AbortSignal,
+  capability = "",
 ): Promise<void> {
   const response = await fetch(`${BASE}/api/ask/stream`, {
     method: "POST",
@@ -348,7 +365,7 @@ export async function askStream(
       ...(await authHeaders()),
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ question, history }),
+    body: JSON.stringify({ question, history, capability }),
     signal,
   });
 
@@ -400,6 +417,8 @@ export async function askStream(
               follow_ups?: string[];
               refused: boolean;
               cached: boolean;
+              clarify?: string[];
+              capability?: string;
             },
           );
           break;
